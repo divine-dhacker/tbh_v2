@@ -6,23 +6,41 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <title>tbh – Anonymous Vibes | Chat</title>
+    <style>
+        /* This is your "Sign of Life" - it shows immediately on click */
+        #global-loader {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(18, 18, 18, 0.9);
+            z-index: 99999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #333;
+            border-top: 5px solid #ff4d6d;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-text { color: white; margin-top: 20px; font-family: sans-serif; letter-spacing: 1px; }
+    </style>
 </head>
 <body class="dark-theme has-sidebar">
+
+    <div id="global-loader">
+        <div class="spinner"></div>
+        <div class="loading-text">CREATING VIBE...</div>
+    </div>
+
     <header class="mobile-header">
         <div class="logo"><h2>tbh</h2><span class="tagline">Anonymous Vibes</span></div>
-        <div class="right-icons"><i class="fa-regular fa-bell icon"></i></div>
     </header>
-
-    <nav class="top-nav">
-        <div class="logo"><h2>tbh</h2><span class="tagline">Anonymous Vibes</span></div>
-        <div class="menu-list">
-            <ul>
-                <li><a href="index.html"><i class="fa-solid fa-house"></i> &nbsp;Home</a></li>
-                <li class="active"><a href="chat.html"><i class="fa-regular fa-message"></i> &nbsp;Chat</a></li>
-                <li><a href="gistme.html"><i class="fas fa-mask"></i>&nbsp;Post</a></li>
-            </ul>
-        </div>
-    </nav>
 
     <main>
         <section class="aside-menu">
@@ -34,14 +52,14 @@
             <div class="chat-modal">
                 <div class="modal-header">
                     <h3>Start a New Vibe</h3>
-                    <button class="close-btn" id="close-chat-modal">&times;</button>
+                    <button class="close-btn">&times;</button>
                 </div>
                 <div class="chat-options-container">
-                    <div class="chat-option-card one-on-one" onclick="startVibe('private')">
+                    <div class="chat-option-card one-on-one" data-type="private">
                         <i class="fas fa-user-secret"></i>
                         <span>One-on-One</span>
                     </div>
-                    <div class="chat-option-card community" onclick="startVibe('community')">
+                    <div class="chat-option-card community" data-type="community">
                         <i class="fas fa-users"></i>
                         <span>Community</span>
                     </div>
@@ -53,29 +71,43 @@
             <div id="active-chat-interface" class="active-chat-container" style="display: none;">
                 <div class="chat-header">
                     <h3 id="active-vibe-name">Anonymous Chat</h3>
-                    <i class="fas fa-ellipsis-v"></i>
                 </div>
                 <div id="chat-messages" class="chat-messages"></div>
                 <form id="chat-form" class="chat-input-area">
-                    <input type="text" id="message-input" placeholder="Say something anonymously..." required autocomplete="off">
-                    <button type="submit" id="send-msg-btn"><i class="fas fa-paper-plane"></i></button>
+                    <input type="text" id="message-input" placeholder="Say something..." required>
+                    <button type="submit"><i class="fas fa-paper-plane"></i></button>
                 </form>
             </div>
 
             <div id="no-chat-selected" class="new-chat-row">
-                <i class="fas fa-comments" style="font-size: 3rem; color: var(--primary-bd); margin-bottom: 20px;"></i>
+                <i class="fas fa-comments" style="font-size: 3rem; color: #ff4d6d; margin-bottom: 20px;"></i>
                 <h2>Pick a vibe to start</h2>
                 <button id="open-chat-modal-main" class="new-chat-btn">New Anonymous Chat</button>
             </div>
         </section>
     </main>
 
-    <nav class="bottom-nav">
-        <a class="tab" href="index.html"><i class="fas fa-home"></i></a>
-        <a class="tab active" href="chat.html"><i class="fas fa-comment-dots"></i></a>
-        <a class="tab" href="gistme.html"><i class="fas fa-mask"></i></a>
-    </nav>
-
     <script type="module" src="script.js"></script>
+
+    <script>
+        document.addEventListener('click', function(e) {
+            const card = e.target.closest('.chat-option-card');
+            if (card) {
+                // IMMEDIATELY show the loader so you see progress
+                document.getElementById('global-loader').style.display = 'flex';
+                
+                // If the Firebase module loaded correctly, call it
+                if (window.startVibe) {
+                    window.startVibe(card.getAttribute('data-type'));
+                } else {
+                    // If it hasn't loaded (local file error), alert the user
+                    setTimeout(() => {
+                        document.getElementById('global-loader').style.display = 'none';
+                        alert("The app is blocked by your local browser. Please upload to GitHub to activate the redirect!");
+                    }, 2000);
+                }
+            }
+        });
+    </script>
 </body>
 </html>
