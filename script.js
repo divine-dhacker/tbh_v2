@@ -2,6 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { initializeFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, persistentLocalCache, persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+// 1. FIREBASE CONFIGURATION
 const firebaseConfig = {
     apiKey: "AIzaSyCEUDD0iB4iGFSDoC0a3wCXF8PT098Su3w",
     authDomain: "anonymous-messaging-f93c0.firebaseapp.com",
@@ -11,75 +12,111 @@ const firebaseConfig = {
     appId: "1:990716606250:web:a82a15347cc5980aa01053"
 };
 
-// INITIALIZE
+// 2. INITIALIZATION WITH POLLING FIX
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = initializeFirestore(app, {
     localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
-    experimentalForceLongPolling: true // This ensures your 4G stays connected
+    experimentalForceLongPolling: true // CRITICAL: Fixes the 4G Transport Error
 });
 
 let currentUser = null;
-const activeChatId = new URLSearchParams(window.location.search).get('id');
+const urlParams = new URLSearchParams(window.location.search);
+const activeChatId = urlParams.get('id');
 
-// AUTHENTICATION
+// 3. AUTHENTICATION FLOW
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
-        console.log("Verified User:", user.uid);
-        if (activeChatId) loadChatRoom(activeChatId);
+        console.log("Verified User ID:", user.uid);
+        // If the URL has an ID, we load that chat immediately
+        if (activeChatId) {
+            loadChatRoom(activeChatId);
+        }
     } else {
-        signInAnonymously(auth);
+        signInAnonymously(auth).catch(err => console.error("Auth Error:", err));
     }
 });
 
-// THE PROCESS: CREATE AND REDIRECT
-window.startVibe = async function(type) {
-    if (!currentUser) return;
+// 4. THE CREATE ROOM & REDIRECT LOGIC
+window.startVibe = async function(vibeType) {
+    if (!currentUser) {
+        alert("Connecting to tbh... please wait.");
+        return;
+    }
+
+    // Show the loading screen (added to HTML in previous step)
+    const loader = document.getElementById('global-loader');
+    if (loader) loader.style.display = 'flex';
+
     try {
+        // Create the room document
         const docRef = await addDoc(collection(db, "rooms"), {
-            type: type,
+            type: vibeType,
             createdBy: currentUser.uid,
             createdAt: serverTimestamp(),
-            name: type === 'private' ? 'One-on-One' : 'Community'
+            vibeName: vibeType === 'private' ? 'One-on-One' : 'Community'
         });
-        // NEXT STEP: Page reloads with the new ID in the URL
+
+        console.log("Room Created with ID:", docRef.id);
+
+        // THE NEXT STEP: Redirecting to the chat URL
         window.location.href = `chat.html?id=${docRef.id}`;
-    } catch (e) {
-        console.error("Failed to create room", e);
+        
+    } catch (error) {
+        if (loader) loader.style.display = 'none';
+        console.error("Room Creation Failed:", error);
+        alert("Failed to start vibe. Check your internet connection.");
     }
 };
 
-// LIVE CHAT ENGINE
-function loadChatRoom(id) {
-    const activeUI = document.getElementById('active-chat-interface');
-    const emptyUI = document.getElementById('no-chat-selected');
+// 5. LIVE CHAT ENGINE
+function loadChatRoom(roomId) {
+    const chatInterface = document.getElementById('active-chat-interface');
+    const emptyState = document.getElementById('no-chat-selected');
     
-    if(activeUI) activeUI.style.display = 'flex';
-    if(emptyUI) emptyUI.style.display = 'none';
+    // Switch UI Views
+    if (chatInterface) chatInterface.style.display = 'flex';
+    if (emptyState) emptyState.style.display = 'none';
 
-    const q = query(collection(db, "rooms", id, "messages"), orderBy("timestamp", "asc"));
-    onSnapshot(q, (snap) => {
-        const box = document.getElementById('chat-messages');
-        if (!box) return;
-        box.innerHTML = '';
-        snap.forEach(doc => {
-            const m = doc.data();
-            const isMe = m.senderId === currentUser.uid;
-            box.insertAdjacentHTML('beforeend', `
+    // Listen for messages in this specific room
+    const q = query(
+        collection(db, "rooms", roomId, "messages"), 
+        orderBy("timestamp", "asc")
+    );
+
+    onSnapshot(q, (snapshot) => {
+        const messageContainer = document.getElementById('chat-messages');
+        if (!messageContainer) return;
+
+        messageContainer.innerHTML = ''; // Clear previous messages
+        
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const isMe = data.senderId === currentUser.uid;
+            
+            const messageHtml = `
                 <div class="message-wrapper ${isMe ? 'me' : 'them'}">
-                    <div class="message-bubble">${m.text}</div>
+                    <div class="message-bubble">${data.text}</div>
                 </div>
-            `);
+            `;
+            messageContainer.insertAdjacentHTML('beforeend', messageHtml);
         });
-        box.scrollTop = box.scrollHeight;
+
+        // Auto-scroll to bottom
+        messageContainer.scrollTop = messageContainer.scrollHeight;
     });
 }
 
-// UI HANDLERS
+// 6. UI INTERACTION & FORM SUBMISSION
 document.addEventListener('DOMContentLoaded', () => {
-    // Modal Open/Close
+    // Theme Management
+    const savedTheme = localStorage.getItem('tbh-theme') || 'dark-theme';
+    document.body.className = savedTheme + ' has-sidebar';
+
+    // Modal Controls
     const chatModal = document.getElementById('chat-modal-overlay');
+    
     document.querySelectorAll('#open-chat-modal-main, #open-chat-modal-sidebar').forEach(btn => {
         btn.onclick = () => chatModal.classList.add('active');
     });
@@ -92,17 +129,26 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     });
 
-    // Message Sending
-    document.getElementById('chat-form')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const input = document.getElementById('message-input');
-        if (!input.value.trim() || !activeChatId) return;
+    // Send Message Logic
+    const chatForm = document.getElementById('chat-form');
+    if (chatForm) {
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('message-input');
+            
+            if (!input.value.trim() || !activeChatId || !currentUser) return;
 
-        await addDoc(collection(db, "rooms", activeChatId, "messages"), {
-            text: input.value,
-            senderId: currentUser.uid,
-            timestamp: serverTimestamp()
+            try {
+                await addDoc(collection(db, "rooms", activeChatId, "messages"), {
+                    text: input.value,
+                    senderId: currentUser.uid,
+                    timestamp: serverTimestamp()
+                });
+                input.value = ''; // Clear input
+            } catch (err) {
+                console.error("Error sending message:", err);
+            }
         });
-        input.value = '';
-    });
+    }
 });
+
