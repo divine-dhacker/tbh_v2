@@ -1,17 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <title>tbh – Anonymous Vibes | Chat</title>
+    <title>tbh – GistMe | Post Anonymously</title>
 </head>
-
-<body class="dark-theme has-sidebar">
-
-    <header class="mobile-header">
+<body class="dark-theme has-sidebar"> <header class="mobile-header">
         <div class="logo">
             <h2>tbh</h2>
             <span class="tagline">Anonymous Vibes</span>
@@ -22,101 +18,69 @@
     </header>
 
     <nav class="top-nav">
-        <div class="logo">
-            <h2>tbh</h2>
-            <span class="tagline">Anonymous Vibes</span>
-        </div>
-
+        <div class="logo"><h2>tbh</h2><span class="tagline">Anonymous Vibes</span></div>
         <div class="menu-list">
-           <ul>
+            <ul>
                 <li><a href="index.html"><i class="fa-solid fa-house"></i> &nbsp;Home</a></li>
                 <li><a href="chat.html"><i class="fa-regular fa-message"></i> &nbsp;Chat</a></li>
                 <li class="active"><a href="gistme.html"><i class="fas fa-mask"></i>&nbsp;Post</a></li>
                 <li><a href="#"><i class="fa-solid fa-circle-question"></i>&nbsp;Help</a></li>
             </ul>
         </div>
-
         <div class="user-area">
-            <button id="theme-toggle" aria-label="Toggle dark mode">
-                <i class="fa-solid fa-brush"></i>
-            </button>
-            <div class="user-icon">
-            </div>
+            <button id="theme-toggle"><i class="fa-solid fa-brush"></i></button>
         </div>
     </nav>
 
-    <main>
-
-
-    </main>
-
-    <div id="themeModalOverlay" class="theme-modal-overlay">
-        <div class="theme-modal">
-            
-            <button class="close-theme-btn" aria-label="Close theme selection">
-                <i class="fas fa-times"></i>
-            </button>
-            
-            <h2>Choose theme</h2>
-            
-            <div class="theme-options-container">
-
-                <div class="theme">
-                    <div id="theme-option-dark">                       
-                        <h3><i class="fas fa-moon"></i>&nbsp; Dark Mode</h3>
-                    </div>
-                    
-                    <div id="theme-option-light">
-                        <h3><i class="fas fa-sun"></i>&nbsp; Light Mode</h3>
-                    </div>
-                </div><hr>
-
-                <div class="theme-option" id="theme-option-pink">
-                    <div class="pink" id="theme-option-pink"></div>
-                    <h3>Pink Theme</h3>
-                </div>        
-                
-                <div class="theme-option" id="theme-option-red">
-                    <div class="red" id="theme-option-red"></div>
-                    <h3>Red Theme</h3>
-                </div>
-                
-                <div class="theme-option" id="theme-option-blue">
-                    <div class="blue"></div>
-                    <h3>Blue theme</h3>
-                </div>    
-                
-                <div class="theme-option" id="theme-option-purple">
-                    <div class="purple"></div>
-                    <h3>Purple Theme</h3>
-                </div>
-                
-                <div class="theme-option" id="theme-option-green">
-                    <div class="green"></div>
-                    <h3>Green theme</h3>
-                </div> 
-                      
-                <div class="theme-option" id="theme-option-yellow">
-                    <div class="yellow"></div>
-                    <h3>Yellow Theme</h3>
-                </div>
-                
-                <div class="theme-option" id="theme-option-brown">
-                    <div class="brown"></div>
-                    <h3>Brown theme</h3>
-                </div>
-                
-                <div class="theme-option" id="theme-option-orange">
-                    <div class="orange"></div>
-                    <h3>Orange theme</h3>
-                </div>                  
+    <main class="app-main">
+        <section class="gist-editor-container">
+            <div class="editor-header">
+                <h1>Create a Gist</h1>
+                <p>Share your thoughts with the community, 100% anonymously.</p>
             </div>
 
-        </div>
-    </div>
+            <div class="dynamic-gist-card" id="gist-card">
+                <div class="card-glow"></div>
+                <div class="card-content">
+                    <div class="card-meta">
+                        <span class="tag">PUBLIC FEED</span>
+                        <i class="fas fa-ghost"></i>
+                    </div>
+                    <textarea id="gist-main-input" placeholder="What's on your mind?" maxlength="150"></textarea>
+                    <div class="card-footer">
+                        <span>#anonymous</span>
+                        <span class="char-counter"><span id="char-num">0</span>/150</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-area">
+                <button class="main-cta-button" id="submit-gist">
+                    <span>Post to Feed</span>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </section>
+
+        <section class="public-feed-preview">
+            <h3 class="feed-title">Recent Gists</h3>
+            <div class="feed-scroll" id="feed-items">
+                <div class="mini-gist-card">
+                    <p>"Is it just me or is the coffee in the breakroom getting worse? ☕️"</p>
+                    <div class="mini-footer"><span>4m ago</span><span>🔥 8</span></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <nav class="bottom-nav">
+        <a class="tab" href="index.html"><i class="fas fa-home"></i></a>
+        <a class="tab" href="chat.html"><i class="fas fa-comment-dots"></i></a>
+        <a class="tab active" href="gistme.html"><i class="fas fa-mask"></i></a>
+        <a class="tab" href="#"><i class="fas fa-circle-question"></i></a>
+        <div class="tab" id="mobile-theme-toggle"><i class="fas fa-brush"></i></div>
+    </nav>
 
     <script src="script.js"></script>
-    <script src="https://kit.fontawesome.com/3671b2dd15.js" crossorigin="anonymous"></script>
 </body>
-
 </html>
